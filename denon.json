@@ -1,0 +1,16 @@
+{
+  "$schema": "https://deno.land/x/denon/schema.json",
+  "scripts": {
+    "start": {
+      "cmd": "deno run capture-server.ts",
+      "desc": "run capture server",
+      "allow": [
+        "net",
+        "write",
+        "read",
+        "env"
+      ],
+      "unstable": true
+    }
+  }
+}

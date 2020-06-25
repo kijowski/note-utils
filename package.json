@@ -1,0 +1,27 @@
+{
+  "name": "@kijowski/deno",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "dependencies": {
+    "typescript-deno-plugin": "1.31.0"
+  },
+  "devDependencies": {
+    "prettier": "2.0.5",
+    "typescript": "3.9.5"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kijowski/note-utils.git"
+  },
+  "keywords": [],
+  "author": "Michał Kijowski <michal@kijowski.dev> (https://kijowski.dev)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/kijowski/note-utils/issues"
+  },
+  "homepage": "https://github.com/kijowski/note-utils#readme"
+}

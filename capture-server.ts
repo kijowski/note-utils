@@ -1,15 +1,10 @@
-import { existsSync } from "https://deno.land/std/fs/mod.ts";
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
-import { render } from "https://deno.land/x/mustache/mod.ts";
 import * as log from "https://deno.land/std/log/mod.ts";
 
 const { HOME } = Deno.env.toObject();
 
 const NOTES_FOLDER = `${HOME}/notes`;
 const ASSETS_DIR = `${NOTES_FOLDER}/assets`;
-const DAY_TEMPLATE = `${NOTES_FOLDER}/templates/day.md`;
-
-const encoder = new TextEncoder();
 
 type UrlInput = {
   kind: "url";
@@ -34,29 +29,10 @@ type ImageInput = {
 
 type InputData = UrlInput | TextInput | ImageInput;
 
-const getOrCreateDayNote = async () => {
-  const date = new Date();
-  const dateStr = `${date.getFullYear()}-${
-    (date.getMonth() + 1).toString().padStart(2, "0")
-  }-${date.getDate().toString().padStart(2, "0")}`;
-  const dayNote = `${NOTES_FOLDER}/${dateStr}.md`;
-
-  try {
-    if (!existsSync(dayNote)) {
-      const template = await Deno.readTextFile(DAY_TEMPLATE);
-      const content = render(template, { date: dateStr });
-      await Deno.writeTextFile(dayNote, content);
-    }
-    return dayNote;
-  } catch (err) {
-    log.error(`Failed to created ${dayNote}: ${err.message}`);
-    throw err;
-  }
-};
-
 const downloadAsset = async (src: string) => {
   const date = new Date();
-  let fileName = src.split("/").pop()?.split("#").shift()?.split("?").shift() ??
+  let fileName =
+    src.split("/").pop()?.split("#").shift()?.split("?").shift() ??
     `${date.getTime()}.png`;
   const response = await fetch(src);
   const body = new Uint8Array(await response.arrayBuffer());
@@ -75,18 +51,24 @@ const downloadAsset = async (src: string) => {
 };
 
 const processCapture = async (input: InputData) => {
+  const url = encodeURIComponent(input.url);
+  const title = encodeURIComponent(input.title);
+  let selection: string | undefined;
   switch (input.kind) {
     case "text":
-      return `${
-        input.selection.replace(/\s*$/gm, "  ")
-      }\n\nsource: [${input.title}](${input.url})\n\n---\n`;
+      selection = encodeURIComponent(input.selection);
+      return `org-protocol://roam-ref?template=r&ref=${url}&title=${title}&body=${selection}`;
     case "code":
-      return `\`\`\`\n${input.selection}\n\`\`\`\nsource: [${input.title}](${input.url})\n\n---\n`;
+      selection = encodeURIComponent(input.selection);
+      // return `org-protocol://roam-ref?template=c&ref=${url}&title=${title}&body=${selection}`;
+      return `org-protocol://capture?template=cs&url=${url}&title=${title}&body=${selection}`;
     case "url":
-      return `[${input.title}](${input.url})\n\n---\n`;
+      return `org-protocol://roam-ref?template=w&ref=${url}&title=${title}`;
     case "image":
       const fileName = await downloadAsset(input.src);
-      return `![${input.alt}](./assets/${fileName})\nsource: [${input.title}](${input.url})\n\n---\n`;
+      return `org-protocol://roam-ref?template=i&ref=${url}&title=${title}&file=${encodeURIComponent(
+        fileName
+      )}`;
   }
 };
 
@@ -99,19 +81,19 @@ router.post("/capture", async (ctx) => {
     if (rawBody.type === "text") {
       body = JSON.parse(rawBody.value);
     }
-    const dayNote = await getOrCreateDayNote();
     const entry = await processCapture(body);
 
-    await Deno.writeFile(
-      dayNote,
-      encoder.encode(entry),
-      { append: true },
-    );
+    Deno.run({
+      cmd: ["emacsclient", "--no-wait", entry],
+    });
 
     ctx.response.status = 200;
   } catch (err) {
-    log.error(`Failed request: ${ctx.request.url} with error: ${err.message}`, err);
-    log.error(err)
+    log.error(
+      `Failed request: ${ctx.request.url} with error: ${err.message}`,
+      err
+    );
+    log.error(err);
     ctx.response.status = 500;
   }
 });

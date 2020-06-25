@@ -4,12 +4,7 @@
     "start": {
       "cmd": "deno run capture-server.ts",
       "desc": "run capture server",
-      "allow": [
-        "net",
-        "write",
-        "read",
-        "env"
-      ],
+      "allow": ["net", "write", "read", "env", "run"],
       "unstable": true
     }
   }

@@ -84,7 +84,7 @@ router.post("/capture", async (ctx) => {
     const entry = await processCapture(body);
 
     Deno.run({
-      cmd: ["emacsclient", "--no-wait", entry],
+      cmd: ["org-roam-capture", "reference", "title", "body"],
     });
 
     ctx.response.status = 200;

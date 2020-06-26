@@ -1074,13 +1074,17 @@ function capture(body) {
     );
 }
 
-mapkey("zz", "Capture selection", function () {
+function captureSelection() {
   const selection = document.getSelection().toString();
 
   const body = selection == "" ? { kind: "url" } : { selection, kind: "text" };
 
   capture(body);
-});
+}
+
+mapkey("zz", "Capture selection", captureSelection);
+
+vmapkey("c", "Capture selection", captureSelection);
 
 mapkey("zx", "Capture and edit selection", function () {
   let htmlSelection = getSelectionHTML();

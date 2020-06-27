@@ -3,73 +3,43 @@ import * as log from "https://deno.land/std/log/mod.ts";
 
 const { HOME } = Deno.env.toObject();
 
-const NOTES_FOLDER = `${HOME}/notes`;
-const ASSETS_DIR = `${NOTES_FOLDER}/assets`;
+const ASSETS_DIR = `${HOME}/notes/assets`;
 
-type UrlInput = {
-  kind: "url";
+type InputData = {
+  template: "c" | "t" | "u" | "i";
   url: string;
   title: string;
+  body: string;
 };
 
-type TextInput = {
-  kind: "code" | "text";
-  url: string;
-  title: string;
-  selection: string;
+const createFilename = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const hour = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds().toString().padStart(2, "0");
+  return `${year}${month}${day}${hour}${minutes}${seconds}`;
 };
-
-type ImageInput = {
-  kind: "image";
-  url: string;
-  title: string;
-  src: string;
-  alt: string;
-};
-
-type InputData = UrlInput | TextInput | ImageInput;
 
 const downloadAsset = async (src: string) => {
   const date = new Date();
-  let fileName =
-    src.split("/").pop()?.split("#").shift()?.split("?").shift() ??
-    `${date.getTime()}.png`;
+  let fileName = createFilename();
   const response = await fetch(src);
   const body = new Uint8Array(await response.arrayBuffer());
   const contentType = response.headers.get("content-type");
 
   const fileParts = fileName.split(".");
   if (fileParts.length > 1) {
-    fileName = `${date.getTime()}.${fileParts.pop() ?? "png"}`;
+    fileName = `${fileName}.${fileParts.pop() ?? "png"}`;
   } else if (contentType?.endsWith("jpeg") || contentType?.endsWith("jpg")) {
-    fileName = `${date.getTime()}.jpg`;
+    fileName = `${fileName}.jpg`;
   } else if (contentType?.endsWith("png")) {
-    fileName = `${date.getTime()}.png`;
+    fileName = `${fileName}.png`;
   }
   await Deno.writeFile(`${ASSETS_DIR}/${fileName}`, body);
   return fileName;
-};
-
-const processCapture = async (input: InputData) => {
-  const url = encodeURIComponent(input.url);
-  const title = encodeURIComponent(input.title);
-  let selection: string | undefined;
-  switch (input.kind) {
-    case "text":
-      selection = encodeURIComponent(input.selection);
-      return `org-protocol://roam-ref?template=r&ref=${url}&title=${title}&body=${selection}`;
-    case "code":
-      selection = encodeURIComponent(input.selection);
-      // return `org-protocol://roam-ref?template=c&ref=${url}&title=${title}&body=${selection}`;
-      return `org-protocol://capture?template=cs&url=${url}&title=${title}&body=${selection}`;
-    case "url":
-      return `org-protocol://roam-ref?template=w&ref=${url}&title=${title}`;
-    case "image":
-      const fileName = await downloadAsset(input.src);
-      return `org-protocol://roam-ref?template=i&ref=${url}&title=${title}&file=${encodeURIComponent(
-        fileName
-      )}`;
-  }
 };
 
 const router = new Router();
@@ -77,14 +47,21 @@ const router = new Router();
 router.post("/capture", async (ctx) => {
   try {
     const rawBody = await ctx.request.body();
-    let body: InputData = rawBody.value;
+    console.log(rawBody);
+    let input: InputData = rawBody.value;
     if (rawBody.type === "text") {
-      body = JSON.parse(rawBody.value);
+      input = JSON.parse(rawBody.value);
     }
-    const entry = await processCapture(body);
+    const { template, url, title } = input;
+    let body = input.body;
+    if (input.template === "i") {
+      const fileName = await downloadAsset(input.body);
+      body = fileName;
+    }
+    console.log(input);
 
     Deno.run({
-      cmd: ["org-roam-capture", "reference", "title", "body"],
+      cmd: ["org-roam-capture", template, url, title, body],
     });
 
     ctx.response.status = 200;

@@ -1077,7 +1077,8 @@ function capture(body) {
 function captureSelection() {
   const selection = document.getSelection().toString();
 
-  const body = selection == "" ? { kind: "url" } : { selection, kind: "text" };
+  const body =
+    selection == "" ? { template: "u" } : { body: selection, template: "t" };
 
   capture(body);
 }
@@ -1090,7 +1091,7 @@ mapkey("zx", "Capture and edit selection", function () {
   let htmlSelection = getSelectionHTML();
   let selection = turndown.turndown(htmlSelection);
   Front.showEditor(selection, function (updated) {
-    capture({ selection: updated, kind: "text" });
+    capture({ body: updated, template: "t" });
   });
 });
 
@@ -1102,19 +1103,19 @@ mapkey("zc", "Capture code snippet", function () {
     return;
   }
 
-  capture({ selection, kind: "code" });
+  capture({ body: selection, template: "c" });
 });
 
 mapkey("za", "Capture image", function () {
   Hints.create("img", function (element) {
-    capture({ src: element.src, alt: element.alt, kind: "image" });
+    capture({ body: element.src, template: "i" });
   });
 });
 
 mapkey("zh", "Capture markdown", function () {
   var htmlSelection = getSelectionHTML();
   var markdownSelection = turndown.turndown(htmlSelection);
-  capture({ selection: markdownSelection, kind: "text" });
+  capture({ body: markdownSelection, template: "t" });
 });
 
 // ---- Hints ----

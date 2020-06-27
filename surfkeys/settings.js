@@ -1068,9 +1068,9 @@ function capture(body) {
     },
     body: JSON.stringify({ url, title, ...body }),
   })
-    .then(() => Front.showBanner(`Captured ${body.kind}`))
+    .then(() => Front.showBanner(`Captured ${body.template}`))
     .catch((err) =>
-      Front.showBanner(`Failed to capture ${body.kind}: ${err.message}`)
+      Front.showBanner(`Failed to capture ${body.template}: ${err.message}`)
     );
 }
 

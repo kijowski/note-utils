@@ -3,7 +3,7 @@ import * as log from "https://deno.land/std/log/mod.ts";
 
 const { HOME } = Deno.env.toObject();
 
-const ASSETS_DIR = `${HOME}/notes/assets`;
+const NOTES_DIR = `${HOME}/notes`;
 
 type InputData = {
   template: "c" | "t" | "u" | "i";
@@ -38,7 +38,8 @@ const downloadAsset = async (src: string) => {
   } else if (contentType?.endsWith("png")) {
     fileName = `${fileName}.png`;
   }
-  await Deno.writeFile(`${ASSETS_DIR}/${fileName}`, body);
+
+  await Deno.writeFile(`${NOTES_DIR}/${fileName}`, body);
   return fileName;
 };
 

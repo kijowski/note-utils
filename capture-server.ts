@@ -1,5 +1,6 @@
 import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 import * as log from "https://deno.land/std/log/mod.ts";
+import * as Engine from "./engine.ts";
 
 const { HOME } = Deno.env.toObject();
 
@@ -59,11 +60,15 @@ router.post("/capture", async (ctx) => {
       const fileName = await downloadAsset(input.body);
       body = fileName;
     }
-    console.log(input);
-
-    Deno.run({
-      cmd: ["org-roam-capture", template, url, title, body],
-    });
+    switch (template) {
+      case "t":
+      case "c":
+      case "u":
+        Deno.run({
+          cmd: Engine.runRawCaptureProtocol("s" + template, url, title, body),
+        });
+        break;
+    }
 
     ctx.response.status = 200;
   } catch (err) {
